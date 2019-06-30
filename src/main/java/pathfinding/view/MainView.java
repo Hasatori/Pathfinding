@@ -17,10 +17,8 @@ import pathfinding.utils.ResourceLoader;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
 public class MainView extends View {
 
@@ -82,7 +80,7 @@ public class MainView extends View {
         generateMazeButton.setOnAction((action) -> {
             generateMaze(grid);
         });
-        fillGridPane(100);
+        fillGridPane(500);
         centerPane.getChildren().add(gridPane);
 
 
@@ -113,7 +111,7 @@ public class MainView extends View {
 
 
             Pane pane = new Pane();
-
+/*
             pane.setOnMouseEntered(event -> {
                 if (event.isAltDown() && pane.getStyle().equals(FLOOR_STYLE)) {
                     grid[rowNumber][finalI] = Signs.WALL_SIGN.getSignValue();
@@ -137,7 +135,7 @@ public class MainView extends View {
                     finishNode = pane;
                 }
             });
-
+*/
             pane.setStyle(FLOOR_STYLE);
             pane.setMinSize(size, size);
             result[i] = pane;
@@ -179,12 +177,18 @@ public class MainView extends View {
 
     private void generateMaze(int[][] maz) {
         for (int x = 0; x < maz.length; x++) {
-            Arrays.fill(maz[x], Signs.WALL_SIGN.getSignValue());
+            for (int i = 0; i < maz[x].length; i++) {
+                maz[x][i] = Signs.WALL_SIGN.getSignValue();
+                gridPane.getChildren().get(x * gridSize + i).setStyle(WALL_STYLE);
+
+            }
         }
 
         // select random point and open as start node
         MyPoint startingPoint = new MyPoint((int) (Math.random() * maz.length), (int) (Math.random() * maz.length), null);
-        maz[startingPoint.r][startingPoint.c] = Signs.WALL_SIGN.getSignValue();
+        List<Node> toHighlight = new LinkedList<>();
+        maz[startingPoint.r][startingPoint.c] = Signs.START_SIGN.getSignValue();
+        gridPane.getChildren().get(startingPoint.r * gridSize + startingPoint.c).setStyle(START_STYLE);
 
         // iterate through direct neighbors of node
         ArrayList<MyPoint> frontier = new ArrayList<>();
@@ -214,6 +218,8 @@ public class MainView extends View {
                         // open path between the nodes
                         maz[cu.r][cu.c] = Signs.FLOOR_SIGN.getSignValue();
                         maz[op.r][op.c] = Signs.FLOOR_SIGN.getSignValue();
+                        toHighlight.add(gridPane.getChildren().get(cu.r * gridSize + cu.c));
+                        toHighlight.add(gridPane.getChildren().get(op.r * gridSize + op.c));
 
                         // store last node in order to mark it later
                         last = op;
@@ -237,15 +243,27 @@ public class MainView extends View {
 
             // if algorithm has resolved, mark end node
             if (frontier.isEmpty())
-                maz[last.r][last.c] = Signs.WALL_SIGN.getSignValue();
+                maz[last.r][last.c] = Signs.FINISH_SIGN.getSignValue();
         }
-        int half = Math.round(grid.length / 2);
+
+        MyPoint finalLast = last;
         new Thread(() -> {
-            printMaze(grid, 0, half);
+            for (int i = 0; i < toHighlight.size(); i++) {
+                int finalI = i;
+                Platform.runLater(() -> {
+                    toHighlight.get(finalI).setStyle(FLOOR_STYLE);
+                });
+                if (i % 50 == 0) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            gridPane.getChildren().get(finalLast.r * gridSize + finalLast.c).setStyle(FINISH_STYLE);
         }).start();
-        new Thread(() -> {
-            printMaze(grid, half, grid.length);
-        }).start();
+
     }
 
     private void printMaze(int[][] maz, int start, int end) {
@@ -271,7 +289,7 @@ public class MainView extends View {
 
 
                 try {
-                    Thread.sleep(2);
+                    Thread.sleep(0);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
