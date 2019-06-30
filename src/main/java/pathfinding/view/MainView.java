@@ -80,7 +80,7 @@ public class MainView extends View {
         generateMazeButton.setOnAction((action) -> {
             generateMaze(grid);
         });
-        fillGridPane(500);
+        fillGridPane(100);
         centerPane.getChildren().add(gridPane);
 
 
@@ -264,37 +264,6 @@ public class MainView extends View {
             gridPane.getChildren().get(finalLast.r * gridSize + finalLast.c).setStyle(FINISH_STYLE);
         }).start();
 
-    }
-
-    private void printMaze(int[][] maz, int start, int end) {
-        int floor = Signs.FLOOR_SIGN.getSignValue();
-        int wall = Signs.WALL_SIGN.getSignValue();
-        for (int x = start; x < end; x++) {
-            for (int i = 0; i < maz[x].length; i++) {
-                int value = maz[x][i];
-                String style = "";
-                if (value == floor) {
-                    style = FLOOR_STYLE;
-                }
-
-                if (value == wall) {
-                    style = WALL_STYLE;
-                }
-                int finalX = x;
-                int finalI = i;
-                String finalStyle = style;
-                Platform.runLater(() -> {
-                    gridPane.getChildren().get(finalX * gridSize + finalI).setStyle(finalStyle);
-                });
-
-
-                try {
-                    Thread.sleep(0);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     static class MyPoint {
