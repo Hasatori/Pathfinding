@@ -18,8 +18,13 @@
       </Pane>
    </center>
    <bottom>
-      <VBox BorderPane.alignment="CENTER">
+      <VBox spacing="15.0" BorderPane.alignment="CENTER">
          <children>
+            <HBox>
+               <children>
+                  <Button fx:id="generateMazeButton" mnemonicParsing="false" text="Generate maze" />
+               </children>
+            </HBox>
             <HBox>
                <children>
                   <Label prefHeight="17.0" prefWidth="95.0" text="Select algorithm:" />

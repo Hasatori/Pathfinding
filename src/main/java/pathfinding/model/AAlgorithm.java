@@ -97,7 +97,7 @@ public class AAlgorithm extends APathFindingAlgorithm {
                 }
                 if (!neighbour.isStart() && !neighbour.isFinish()) {
                     controller.fillSearch(neighbour.x, neighbour.y);
-                    Thread.sleep(0);
+                    Thread.sleep(1);
                 }
             }
 
