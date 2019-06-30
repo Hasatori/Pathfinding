@@ -80,7 +80,7 @@ public class MainView extends View {
         generateMazeButton.setOnAction((action) -> {
             generateMaze(grid);
         });
-        fillGridPane(100);
+        fillGridPane(200);
         centerPane.getChildren().add(gridPane);
 
 
@@ -111,7 +111,7 @@ public class MainView extends View {
 
 
             Pane pane = new Pane();
-/*
+
             pane.setOnMouseEntered(event -> {
                 if (event.isAltDown() && pane.getStyle().equals(FLOOR_STYLE)) {
                     grid[rowNumber][finalI] = Signs.WALL_SIGN.getSignValue();
@@ -135,7 +135,7 @@ public class MainView extends View {
                     finishNode = pane;
                 }
             });
-*/
+
             pane.setStyle(FLOOR_STYLE);
             pane.setMinSize(size, size);
             result[i] = pane;
