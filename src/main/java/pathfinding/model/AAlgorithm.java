@@ -39,7 +39,9 @@ public class AAlgorithm extends APathFindingAlgorithm {
                 newNeighbours.removeAll(neighbours);
                 neighbours = newNeighbours;
             }
-            controller.fillPath(getPath());
+            List<Point> path = getPath();
+            path.remove(path.get(path.size()-1));
+            controller.fillPath(path);
         } catch (InterruptedException e) {
 
         }

@@ -16,7 +16,9 @@ import pathfinding.utils.ResourceLoader;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MainView extends View {
@@ -58,11 +60,15 @@ public class MainView extends View {
             controller.startPathFindingAlgorthm(algorithmComboBox.getSelectionModel().getSelectedItem(), grid);
             startButton.setDisable(true);
             stopButton.setDisable(false);
+            resetButton.setDisable(false);
+            generateMazeButton.setDisable(true);
         });
 
         stopButton.setOnAction((action) -> {
             startButton.setDisable(false);
             stopButton.setDisable(true);
+            resetButton.setDisable(false);
+            generateMazeButton.setDisable(false);
             controller.stop();
         });
 
@@ -77,8 +83,11 @@ public class MainView extends View {
         });
 
         generateMazeButton.setOnAction((action) -> {
-            //    generatePrimsMaze(grid);
-            generateRecursiveBackTrackerMaze(grid);
+            generateMazeButton.setDisable(true);
+            startButton.setDisable(true);
+            stopButton.setDisable(true);
+            resetButton.setDisable(true);
+            generatePrimsMaze(grid);
         });
         fillGridPane(50);
         centerPane.getChildren().add(gridPane);
@@ -154,8 +163,11 @@ public class MainView extends View {
     }
 
     public void highlightPath(List<Point> path) {
-
         highlight(PATH_STYLE, path);
+        generateMazeButton.setDisable(false);
+        startButton.setDisable(true);
+        stopButton.setDisable(true);
+        resetButton.setDisable(false);
     }
 
     public void highlightSearch(int x, int y) {
@@ -186,10 +198,10 @@ public class MainView extends View {
 
         // select random point and open as start node
         MyPoint startingPoint = new MyPoint((int) (Math.random() * maz.length), (int) (Math.random() * maz.length), null);
+        MyPoint finishPoint = new MyPoint((int) (Math.random() * maz.length), (int) (Math.random() * maz.length), null);
         List<Node> toHighlight = new LinkedList<>();
         maz[startingPoint.r][startingPoint.c] = Signs.START_SIGN.getSignValue();
-        gridPane.getChildren().get(startingPoint.r * gridSize + startingPoint.c).setStyle(START_STYLE);
-
+        maz[finishPoint.r][finishPoint.c] = Signs.FINISH_SIGN.getSignValue();
         // iterate through direct neighbors of node
         ArrayList<MyPoint> frontier = new ArrayList<>();
         for (int x = -1; x <= 1; x++)
@@ -240,13 +252,20 @@ public class MainView extends View {
                 }
             } catch (Exception e) { // ignore NullPointer and ArrayIndexOutOfBounds
             }
-
-            // if algorithm has resolved, mark end node
-            if (frontier.isEmpty())
-                maz[last.r][last.c] = Signs.FINISH_SIGN.getSignValue();
         }
 
-        MyPoint finalLast = last;
+        while (isBlockedByWallsOrEndOfTheMap(startingPoint, maz)) {
+            maz[startingPoint.r][startingPoint.c] = Signs.WALL_SIGN.getSignValue();
+            startingPoint = new MyPoint((int) (Math.random() * maz.length), (int) (Math.random() * maz.length), null);
+        }
+
+        while (isBlockedByWallsOrEndOfTheMap(finishPoint, maz)) {
+            maz[finishPoint.r][finishPoint.c] = Signs.WALL_SIGN.getSignValue();
+            finishPoint = new MyPoint((int) (Math.random() * maz.length), (int) (Math.random() * maz.length), null);
+        }
+
+        gridPane.getChildren().get(startingPoint.r * gridSize + startingPoint.c).setStyle(START_STYLE);
+        gridPane.getChildren().get(finishPoint.r * gridSize + finishPoint.c).setStyle(FINISH_STYLE);
         new Thread(() -> {
             for (int i = 0; i < toHighlight.size(); i++) {
                 int finalI = i;
@@ -261,103 +280,25 @@ public class MainView extends View {
                     }
                 }
             }
-            gridPane.getChildren().get(finalLast.r * gridSize + finalLast.c).setStyle(FINISH_STYLE);
+
+
+            generateMazeButton.setDisable(false);
+            startButton.setDisable(false);
+            stopButton.setDisable(true);
+            resetButton.setDisable(false);
         }).start();
 
     }
 
-    private void generateRecursiveBackTrackerMaze(int[][] maz) {
-        this.unvisitedCells = new LinkedList<>();
-        for (int x = 0; x < maz.length; x++) {
-            for (int i = 0; i < maz[x].length; i++) {
-                unvisitedCells.add(new Point(x, i));
-                maz[x][i] = Signs.WALL_SIGN.getSignValue();
-                gridPane.getChildren().get(x * gridSize + i).setStyle(WALL_STYLE);
-            }
-        }
-        Point finish, start;
-        Point current = unvisitedCells.get(random.nextInt(maz.length));
-        maz[current.x][current.y] = Signs.WALL_SIGN.getSignValue();
-        finish = null;
-        start = current;
-        maz[start.x][start.y] = Signs.START_SIGN.getSignValue();
-        Stack<Point> stack = new Stack<>();
+    private boolean isBlockedByWallsOrEndOfTheMap(MyPoint point, int[][] maze) {
+        int signToCheck = Signs.WALL_SIGN.getSignValue();
+        boolean leftNeighbor = point.c == 0 || maze[point.r][point.c - 1] == signToCheck;
+        boolean topNeighbor = point.r == 0 || maze[point.r - 1][point.c] == signToCheck;
+        boolean rightNeighbor = point.c == maze[point.r].length || maze[point.r][point.c + 1] == signToCheck;
+        boolean bottomNeighbor = point.r == maze.length || maze[point.r + 1][point.c] == signToCheck;
 
-        while (!unvisitedCells.isEmpty()) {
-            if (unvisitedCells.size() == 1) {
-                finish = unvisitedCells.get(0);
-                maz[finish.x][finish.y] = Signs.FINISH_SIGN.getSignValue();
-            }
-            Point unvisited = this.chooseRandomUnvisitedNeighbour(maz, current);
-            if (unvisited != null) {
-                stack.push(current);
-                removeWallBetween(maz, current, unvisited);
-                current = unvisited;
-                maz[current.x][current.y] = Signs.FLOOR_SIGN.getSignValue();
-                gridPane.getChildren().get(current.x * gridSize + current.y).setStyle(FLOOR_STYLE);
-                unvisitedCells.remove(current);
-            } else if (!stack.isEmpty()) {
-                current = stack.pop();
-            } else {
-                current = unvisitedCells.remove(random.nextInt(unvisitedCells.size()));
-                maz[current.x][current.y] = Signs.FLOOR_SIGN.getSignValue();
-                gridPane.getChildren().get(current.x * gridSize + current.y).setStyle(FLOOR_STYLE);
-            }
-        }
-
+        return leftNeighbor && topNeighbor && rightNeighbor && bottomNeighbor;
     }
-
-    private List<Point> unvisitedCells;
-
-    private void removeWallBetween(int[][] maz, Point p1, Point p2) {
-        int x = p1.x - p2.x;
-        int y = p1.y - p2.y;
-
-        if (x == 0 && y == 0) {
-            x = p2.x + (x / 2);
-            y = p2.y + (y / 2);
-            maz[x][y] = Signs.FLOOR_SIGN.getSignValue();
-        }
-
-
-    }
-
-    private Point chooseRandomUnvisitedNeighbour(int[][] maz, Point point) {
-        int x = point.x;
-        int y = point.y;
-        int left, right, down, up = 0;
-        List<Point> toSelectFrom = new ArrayList<>();
-        if (y - 1 >= 0) {
-            left = maz[x][y - 1];
-            if (left == Signs.WALL_SIGN.getSignValue()) {
-                toSelectFrom.add(this.unvisitedCells.get(point.x * gridSize + point.y - 1));
-            }
-        }
-        if (y + 1 < maz.length) {
-            right = maz[x][y + 1];
-            if (right == Signs.WALL_SIGN.getSignValue()) {
-                toSelectFrom.add(this.unvisitedCells.get(point.x * gridSize + point.y + 1));
-            }
-        }
-        if (x + 1 < maz.length) {
-            down = maz[x + 1][y];
-            if (down == Signs.WALL_SIGN.getSignValue()) {
-                toSelectFrom.add(this.unvisitedCells.get((point.x + 1) * gridSize + point.y));
-            }
-        }
-        if (x - 1 >= 0) {
-            up = maz[x - 1][y];
-            if (up == Signs.WALL_SIGN.getSignValue()) {
-                toSelectFrom.add(this.unvisitedCells.get((point.x - 1) * gridSize + point.y));
-            }
-        }
-
-        if (toSelectFrom.isEmpty())
-            return null;
-        return toSelectFrom.get(random.nextInt(toSelectFrom.size()));
-    }
-
-    private static Random random = new Random();
 
     static class MyPoint {
         Integer r;
