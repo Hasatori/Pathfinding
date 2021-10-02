@@ -8,5 +8,4 @@ Simple java app that visualizes various pathfinding algorithms.
 
 ## How to start
 
-1. `mvn clean install` - will create a jar in the target folder
-2. `java -jar <jar-name>`
+1. run main class `pathfinding.Main`
